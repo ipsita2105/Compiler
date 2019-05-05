@@ -1,0 +1,41 @@
+structure A = Absyn
+
+%%
+%term
+     EOF 
+   | FOR
+   | INT of int
+   | EQ | PLUS
+   | IF  | THEN  | ELSE
+   | STRING of string
+   | LET | IN | END
+
+%nonterm  exp of A.exp 
+	| program of A.exp
+	| explist of A.exp list
+
+%pos int
+%verbose
+%start program
+%eop EOF
+%noshift EOF
+
+%name Tiger
+
+%keyword LET IN END IF ELSE THEN
+
+
+%%
+
+program	: exp		        (exp)	
+
+exp     :
+	  INT    (A.IntExp INT)
+	| STRING (A.StringExp (STRING, STRINGleft))
+	| exp PLUS exp (A.OpExp {left=exp1, oper=A.PlusOp, right= exp2, pos=PLUSleft})
+	| exp EQ exp (A.OpExp {left=exp1, oper= A.EqOp, right= exp2, pos= EQleft})
+        | LET exp IN exp END (A.LetExp {decs= exp1, body= exp2, pos= LETleft}) 
+	| IF  exp THEN exp ELSE exp (A.IfExp {cond=exp1, body1= exp2, body2= exp3, pos=IFleft})
+
+explist: (nil)
+       | exp explist (exp::explist)
